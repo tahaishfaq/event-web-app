@@ -1,16 +1,19 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+// src/App.js
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import LoginPage from './pages/Login/Login';
+import HomePage from './pages/Homepage/HomePage';
 function App() {
-  const [count, setCount] = useState(0)
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
   return (
-    <>
-    <div className='text-4xl'>Hello Event Website</div>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/LoginPage" /> : <homepage />} />
+        <Route path="/homepage" element={isLoggedIn ? <HomePage /> : <Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/login" />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
