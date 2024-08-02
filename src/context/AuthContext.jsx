@@ -1,0 +1,108 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
+import axiosInstance from "../utils/axiosInstance";
+import { toast } from "sonner";
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState("");
+  const [totalEarnings, setTotalEarnings] = useState(0);
+
+  useEffect(() => {
+    if (localStorage.getItem("event_user")) {
+      const storedUser = JSON.parse(localStorage.getItem("event_user"));
+      console.log("user", storedUser);
+      setUser(storedUser);
+      setToken(localStorage.getItem("authToken"));
+      setTotalEarnings(storedUser?.total_earnings);
+    }
+  }, []);
+
+  const register = async (values) => {
+    try {
+      await axiosInstance.post("/users/register", values).then((res) => {
+        console.log("register", res);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const login = async (values) => {
+    try {
+      const response = await axiosInstance.post("/users/login", values);
+      console.log(response?.data);
+      const { token, user } = response.data;
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("event_user", JSON.stringify(user));
+      localStorage.setItem("isLoggedIn", "true");
+      setTotalEarnings(user?.total_earnings);
+      setUser(user);
+      setToken(token);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const logout = () => {
+    localStorage.setItem("authToken", "");
+    localStorage.removeItem("event_user");
+    localStorage.setItem("isLoggedIn", "false");
+    setUser(null);
+    setToken("");
+  };
+
+  const updateProfile = async (data) => {
+    try {
+      await axiosInstance.put("/users/update-profile", data).then((res) => {
+        console.log("udpate-profile",res?.data.user);
+        setUser(res.data.user);
+        localStorage.setItem("event_user", JSON.stringify(res.data.user));
+      })
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addBankAccount = async (data) => {
+    try {
+      const response = await axiosInstance.put("/users/attach-bank-account", data)
+      setUser(response.data.user);
+      localStorage.setItem("event_user", JSON.stringify(response.data.user));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
+  const requestWithdrawal = async (data) => {
+    try {
+      const response = await axiosInstance.post("/users/withdraw", data)
+      console.log("requestWithdrawl", response);
+      setTotalEarnings(0)
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        register,
+        login,
+        logout,
+        updateProfile,
+        addBankAccount,
+        totalEarnings,
+        requestWithdrawal,
+        token,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);
