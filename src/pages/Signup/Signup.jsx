@@ -11,6 +11,7 @@ import { storage } from "../../utils/firebaseConfig";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useAuth } from "../../context/AuthContext";
 import Footer from "../../components/Footer";
+import axiosInstance from "../../utils/axiosInstance";
 
 export default function Signup() {
   const { register } = useAuth();
@@ -41,14 +42,21 @@ export default function Signup() {
     onSubmit: async (values) => {
       setIsUploading(true);
       try {
+        // Check if all images are selected
+        if (!frontPicture || !backPicture || !profilePicture) {
+          toast.error("Please select all required images");
+          setIsUploading(false);
+          return;
+        }
+  
         const frontPictureURL = await uploadImage(frontPicture, "frontPicture");
         const backPictureURL = await uploadImage(backPicture, "backPicture");
         const profilePicutureURL = await uploadImage(
           profilePicture,
           "profilePicture"
         );
-
-        register({
+  
+        const registrationData = {
           ...values,
           dateOfBirth: dateOfBirth
             ? dateOfBirth.toISOString().split("T")[0]
@@ -56,17 +64,23 @@ export default function Signup() {
           front_picture: frontPictureURL,
           back_picture: backPictureURL,
           profile_picture: profilePicutureURL,
-        });
-
-        toast.success("Registration successful");
+        };
+  
+        await axiosInstance
+          .post("/users/register", registrationData)
+          .then((res) => {
+            console.log(res);
+            toast.success("Registration successful");
+            setTimeout(() => {
+              navigate("/login");
+            }, 1000);
+          });
       } catch (error) {
-        toast.error("Error uploading images");
+        console.error("Error during registration:", error);
+        toast.error("Try Again! Registration failed");
       } finally {
         formik.resetForm();
-        setTimeout(() => {
-          navigate("/login");
-          setIsUploading(false);
-        }, 1000);
+        setIsUploading(false);
       }
     },
   });
@@ -102,7 +116,7 @@ export default function Signup() {
   return (
     <>
       <Toaster richColors />
-      <div className="min-h-screen flex items-center justify-center lg:hidden md:hidden">
+      <div className="min-h-screen flex items-center justify-center ">
         {" "}
         {/* lg:hidden md:hidden */}
         <div className="w-full">
@@ -339,7 +353,7 @@ export default function Signup() {
                         className="flex w-full justify-center rounded-md bg-purple-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
                         disabled={isUploading}
                       >
-                        {isUploading ? "Uploading..." : "Sign up"}
+                        {isUploading ? "Registering..." : "Sign up"}
                       </button>
                     </div>
                   </form>

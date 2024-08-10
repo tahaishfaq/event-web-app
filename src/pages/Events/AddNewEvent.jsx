@@ -109,7 +109,7 @@ export default function AddNewEvent() {
     <div>
       <Toaster richColors />
       <NavBar />
-      <div className="pt-24 lg:px-0 px-3 w-full lg:hidden md:hidden">
+      <div className="pt-24 lg:px-0 px-3 w-full ">
         <form
           onSubmit={formik.handleSubmit}
           className="max-w-4xl mx-auto flex flex-col gap-y-4"

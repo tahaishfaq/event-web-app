@@ -56,7 +56,7 @@ const Events = () => {
   return (
     <div>
       <NavBar />
-      <div className="pt-14 bg-gray-100 min-h-screen lg:hidden md:hidden">
+      <div className="pt-14 bg-gray-100 min-h-screen ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
           <div className="flex items-center justify-between w-full pb-8">
             <h2 className="text-2xl font-bold text-gray-900">All Events</h2>

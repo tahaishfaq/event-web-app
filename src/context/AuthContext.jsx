@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState("");
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (localStorage.getItem("event_user")) {
@@ -19,31 +20,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const register = async (values) => {
-    try {
-      await axiosInstance.post("/users/register", values).then((res) => {
-        console.log("register", res);
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const register = async (values) => {
+   
+  // };
 
-  const login = async (values) => {
-    try {
-      const response = await axiosInstance.post("/users/login", values);
-      console.log(response?.data);
-      const { token, user } = response.data;
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("event_user", JSON.stringify(user));
-      localStorage.setItem("isLoggedIn", "true");
-      setTotalEarnings(user?.total_earnings);
-      setUser(user);
-      setToken(token);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const login = async (values) => {
+   
+  // };
 
   const logout = () => {
     localStorage.setItem("authToken", "");
@@ -72,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("event_user", JSON.stringify(response.data.user));
     } catch (error) {
       console.error(error);
+      setError(error?.response?.data?.message);
     }
   };
 
@@ -89,15 +73,16 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        register,
-        login,
+        user, 
+        setUser,
         logout,
         updateProfile,
         addBankAccount,
         totalEarnings,
         requestWithdrawal,
         token,
+        setTotalEarnings
+        
       }}
     >
       {children}

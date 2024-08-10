@@ -50,10 +50,10 @@ const EventDetails = () => {
     <div>
       <Toaster richColors />
       <NavBar />
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pt-24 lg:hidden md:hidden">
-        <div className="w-full bg-gray-100 lg:p-6 p-0">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 lg:pt-24 pt-24 ">
+        <div className="w-full lg:bg-white bg-gray-100  p-0">
           <div className="bg-white">
-            <div className="flex flex-col md:flex-row justify-center items-center">
+            <div className="flex flex-col lg:flex-col md:flex-row justify-center items-center">
               <div className="w-full">
                 <Link
                   to="/events"
@@ -143,52 +143,59 @@ const EventDetails = () => {
             </p>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Organizer Contact
-            </h2>
-            <p className="text-gray-700 mb-1">
-              Name:{" "}
-              <span className="font-semibold">
-                {eventDetails.created_by.fullname}
-              </span>
-            </p>
-            <p className="text-gray-700 mb-1">
-              Email:{" "}
-              <span className="font-semibold">
-                {eventDetails.created_by.email}
-              </span>
-            </p>
-            <p className="text-gray-700 mb-1">
-              Phone:{" "}
-              <span className="font-semibold">
-                {eventDetails.created_by.phone_number}
-              </span>
-            </p>
-            <p className="text-gray-700 mb-1">
-              Date of Birth:{" "}
-              <span className="font-semibold">
-                {moment(eventDetails.created_by.dateOfBirth).format("ll")}
-              </span>
-            </p>
-          </div>
-          <div>
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.108037150107!2d-122.4194154846815!3d37.77492977975866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085814d2f2b6e69%3A0xe7bfbd763b144f70!2sBalai%20Kartini!5e0!3m2!1sen!2sus!4v1619159261515!5m2!1sen!2sus"
-              className="w-full h-48 object-cover mb-4"
-              allowFullScreen=""
-              loading="lazy"
-              title="Event Location"
-            ></iframe>
-          </div>
-          <div>
+          <div className="flex flex-col items-start gap-y-3">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Organizer Contact
+              </h2>
+              <p className="text-gray-700 mb-1">
+                Name:{" "}
+                <span className="font-semibold">
+                  {eventDetails.created_by.fullname}
+                </span>
+              </p>
+              <p className="text-gray-700 mb-1">
+                Email:{" "}
+                <span className="font-semibold">
+                  {eventDetails.created_by.email}
+                </span>
+              </p>
+              <p className="text-gray-700 mb-1">
+                Phone:{" "}
+                <span className="font-semibold">
+                  {eventDetails.created_by.phone_number}
+                </span>
+              </p>
+              <p className="text-gray-700 mb-1">
+                Date of Birth:{" "}
+                <span className="font-semibold">
+                  {moment(eventDetails.created_by.dateOfBirth).format("ll")}
+                </span>
+              </p>
+            </div>
             <button
               onClick={() => handleBookTicket(eventDetails._id)}
-              className="bg-purple-500 text-white px-4 py-2 rounded  w-full hover:bg-purple-600"
+              className="bg-purple-500 text-white px-4 py-2 rounded lg:block hidden w-full hover:bg-purple-600"
             >
               Book Ticket
             </button>
           </div>
+        </div>
+        <div className="flex flex-col items-start w-full py-6">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.108037150107!2d-122.4194154846815!3d37.77492977975866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085814d2f2b6e69%3A0xe7bfbd763b144f70!2sBalai%20Kartini!5e0!3m2!1sen!2sus!4v1619159261515!5m2!1sen!2sus"
+            className="w-full lg:h-52 h-48 object-cover mb-4"
+            allowFullScreen=""
+            loading="lazy"
+            title="Event Location"
+          ></iframe>
+
+          <button
+            onClick={() => handleBookTicket(eventDetails._id)}
+            className="bg-purple-500 text-white px-4 py-2 rounded  w-full hover:bg-purple-600 lg:hidden block"
+          >
+            Book Ticket
+          </button>
         </div>
       </div>
       <Footer />

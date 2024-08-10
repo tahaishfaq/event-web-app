@@ -5,9 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; // Adjust the path as needed
 import { toast, Toaster } from "sonner";
 import Footer from "../../components/Footer";
+import axiosInstance from "../../utils/axiosInstance";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { user, setUser, setTotalEarnings } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -26,20 +27,32 @@ export default function Login() {
     }),
     onSubmit: async (values) => {
       setLoading(true);
-      await login(values);
-      toast.success("Login Successful");
-
-      setTimeout(() => {
-        navigate("/events");
+      try {
+        const response = await axiosInstance.post("/users/login", values);
+        console.log(response?.data);
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("event_user", JSON.stringify(user));
+        localStorage.setItem("isLoggedIn", "true");
+        setTotalEarnings(user?.total_earnings);
+        setUser(user);
+        toast.success("Login Successful");
+        setTimeout(() => {
+          navigate("/events");
+        }, 1000);
+      } catch (error) {
+        console.error(error);
+        toast.error(error?.response?.data?.message);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     },
   });
 
   return (
     <>
       <Toaster richColors />
-      <div className="min-h-screen flex items-center justify-center lg:hidden md:hidden">
+      <div className="min-h-screen flex items-center justify-center ">
         <div className="w-full">
           <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
             <div className="mx-auto w-full max-w-sm lg:w-96">
@@ -119,12 +132,12 @@ export default function Login() {
                         </Link>
                       </div>
                       <div className="text-sm leading-6">
-                        <a
-                          href="#"
+                        <Link
+                          to="/register"
                           className="font-semibold text-purple-600 hover:text-purple-500"
                         >
-                          Forgot password?
-                        </a>
+                          Register Now
+                        </Link>
                       </div>
                     </div>
 

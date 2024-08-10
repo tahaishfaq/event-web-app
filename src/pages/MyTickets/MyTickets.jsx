@@ -17,7 +17,7 @@ const MyTickets = () => {
   return (
     <div>
       <NavBar />
-      <div className="py-24 bg-gray-100 min-h-screen lg:hidden md:hidden">
+      <div className="py-24 bg-gray-100 min-h-screen ">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-6">
             <h2 className="text-2xl font-semibold">My Tickets</h2>
