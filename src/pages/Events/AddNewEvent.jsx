@@ -16,10 +16,16 @@ import Footer from "../../components/Footer";
 import { FaCalendar } from "react-icons/fa";
 import { toast, Toaster } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import PlacesAutocomplete from "react-places-autocomplete";
+import { FiMapPin } from "react-icons/fi";
+import { geocodeByAddress, getLatLng } from "react-places-autocomplete";
 
 export default function AddNewEvent() {
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [videoPreview, setVideoPreview] = useState(null);
+  const [address, setAddress] = useState("");
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+  const [uploadTask, setUploadTask] = useState(null);
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -33,8 +39,11 @@ export default function AddNewEvent() {
       event_description: "",
       event_max_capacity: "",
       event_video: null,
+      age_restriction: [], // New field for age restriction
+      gender_restriction: [], // New field for gender restriction
     },
     validationSchema: Yup.object({
+      event_title: Yup.string().required("Event title is required"),
       category: Yup.string().required("Category is required"),
       event_date_and_time: Yup.date().required(
         "Event date and time are required"
@@ -51,9 +60,10 @@ export default function AddNewEvent() {
     onSubmit: async (values, { setSubmitting }) => {
       const videoFile = values.event_video;
       const storageRef = ref(storage, `videos/${videoFile.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, videoFile);
+      const newUploadTask = uploadBytesResumable(storageRef, videoFile);
+      setUploadTask(newUploadTask);
 
-      uploadTask.on(
+      newUploadTask.on(
         "state_changed",
         (snapshot) => {
           const progress =
@@ -65,10 +75,14 @@ export default function AddNewEvent() {
           setSubmitting(false);
         },
         () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            console.log("Video available at: ", downloadURL);
+          getDownloadURL(newUploadTask.snapshot.ref).then((downloadURL) => {
             const eventData = {
               ...values,
+              event_address: {
+                address: address,
+                longitude: coordinates.lng,
+                latitude: coordinates.lat,
+              },
               event_date_and_time: values.event_date_and_time.toISOString(),
               event_video: downloadURL,
             };
@@ -76,7 +90,6 @@ export default function AddNewEvent() {
             axiosInstance
               .post("/events/create", eventData)
               .then((response) => {
-                console.log("Event created successfully:", response.data);
                 setSubmitting(false);
                 toast.success("Event created successfully");
                 setTimeout(() => {
@@ -84,7 +97,6 @@ export default function AddNewEvent() {
                 }, 500);
               })
               .catch((error) => {
-                console.error("Event creation failed:", error);
                 setSubmitting(false);
                 toast.error("Event creation failed");
               });
@@ -103,13 +115,35 @@ export default function AddNewEvent() {
     }
   };
 
+  const handleSelect = async (value) => {
+    const results = await geocodeByAddress(value);
+    const latLng = await getLatLng(results[0]);
+    setAddress(value);
+    setCoordinates(latLng);
+    formik.setFieldValue("event_address", value);
+  };
+
+  const handleCancel = () => {
+    if (uploadTask) {
+      uploadTask.cancel();
+      toast.error("You have canceled the submission.");
+    }
+    formik.resetForm();
+    setVideoUploadProgress(0);
+    setVideoPreview(null);
+    setAddress("");
+    setCoordinates({ lat: null, lng: null });
+  };
+
   const categories = ["Concert", "Conference", "Workshop", "Meetup", "Party"];
+  const ageOptions = ["under_18", "20s", "30s", "40_and_above"];
+  const genderOptions = ["male", "female"];
 
   return (
     <div>
       <Toaster richColors />
       <NavBar />
-      <div className="pt-24 lg:px-0 px-3 w-full ">
+      <div className="pt-32 lg:px-0 px-3 w-full ">
         <form
           onSubmit={formik.handleSubmit}
           className="max-w-4xl mx-auto flex flex-col gap-y-4"
@@ -118,7 +152,7 @@ export default function AddNewEvent() {
             <div className="flex flex-col items-start gap-y-3">
               <Link
                 to="/events"
-                className="text-sm text-gray-700 hover:text-gray-500 flex items-center"
+                className="text-sm text-gray-700 hover:text-gray-500 flex items-center mb-4"
               >
                 <svg
                   className="w-4 h-4"
@@ -229,13 +263,52 @@ export default function AddNewEvent() {
                     Event Address
                   </label>
                   <div className="mt-2">
-                    <input
-                      id="event_address"
-                      name="event_address"
-                      type="text"
-                      {...formik.getFieldProps("event_address")}
-                      className="block w-full rounded-md border-0 bg-gray-900/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-900/10 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm sm:leading-6"
-                    />
+                    <PlacesAutocomplete
+                      value={address}
+                      onChange={setAddress}
+                      onSelect={handleSelect}
+                      searchOptions={{
+                        componentRestrictions: { country: ["ZA"] }, // Restrict to South Africa
+                      }}
+                    >
+                      {({
+                        getInputProps,
+                        suggestions,
+                        getSuggestionItemProps,
+                        loading,
+                      }) => (
+                        <div className="w-full relative">
+                          <input
+                            {...getInputProps({
+                              placeholder: "Search by Location",
+                              className:
+                                "block w-full rounded-md border-0 bg-gray-900/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-900/10 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm sm:leading-6",
+                            })}
+                          />
+                          <div className="absolute top-full left-0 mt-2 w-full bg-white shadow-lg rounded-lg z-10 max-h-60 overflow-y-auto">
+                            {loading && <div>Loading...</div>}
+                            {suggestions.map((suggestion, index) => {
+                              const className = suggestion.active
+                                ? "cursor-pointer bg-purple-500 text-white px-4 py-2"
+                                : "cursor-pointer bg-gray-100 text-black px-4 py-2";
+                              return (
+                                <div
+                                  {...getSuggestionItemProps(suggestion, {
+                                    className,
+                                  })}
+                                  key={index}
+                                >
+                                  <div className="flex items-center">
+                                    <FiMapPin className="mr-2" />
+                                    {suggestion.description}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </PlacesAutocomplete>
                     {formik.touched.event_address &&
                     formik.errors.event_address ? (
                       <div className="text-red-500 text-sm mt-1">
@@ -341,7 +414,90 @@ export default function AddNewEvent() {
                   </div>
                 </div>
 
-                <div className="col-span-full">
+                {/* Age Restriction - Use Checkboxes */}
+                <div className="col-span-full mt-2">
+                  <label
+                    htmlFor="age_restriction"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Age Restriction
+                  </label>
+                  <div className="mt-2 flex gap-x-4">
+                    {ageOptions.map((age) => (
+                      <label key={age} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="age_restriction"
+                          value={age}
+                          checked={formik.values.age_restriction.includes(age)}
+                          onChange={(e) => {
+                            const selectedAges = formik.values.age_restriction;
+                            if (e.target.checked) {
+                              formik.setFieldValue("age_restriction", [
+                                ...selectedAges,
+                                age,
+                              ]);
+                            } else {
+                              formik.setFieldValue(
+                                "age_restriction",
+                                selectedAges.filter((item) => item !== age)
+                              );
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        {age}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gender Restriction - Use Radio Buttons */}
+                <div className="col-span-full mt-2">
+                  <label
+                    htmlFor="gender_restriction"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Gender Restriction
+                  </label>
+                  <div className="mt-2 flex gap-x-4">
+                    {genderOptions.map((gender) => (
+                      <label key={gender} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="gender_restriction"
+                          value={gender}
+                          checked={formik.values.gender_restriction.includes(
+                            gender
+                          )}
+                          onChange={(e) => {
+                            formik.setFieldValue("gender_restriction", [
+                              e.target.value,
+                            ]);
+                          }}
+                          className="mr-2"
+                        />
+                        {gender}
+                      </label>
+                    ))}
+                    {/* Option for no gender restriction */}
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender_restriction"
+                        value=""
+                        checked={formik.values.gender_restriction.length === 0}
+                        onChange={() =>
+                          formik.setFieldValue("gender_restriction", [])
+                        }
+                        className="mr-2"
+                      />
+                      No Restriction
+                    </label>
+                  </div>
+                </div>
+
+                <div className="col-span-full mt-2">
                   <label
                     htmlFor="event_video"
                     className="block text-sm font-medium leading-6 text-gray-900"
@@ -394,16 +550,17 @@ export default function AddNewEvent() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-x-6">
+          <div className="flex items-center justify-end gap-x-6 pt-10">
             <button
               type="button"
-              className="text-sm font-semibold leading-6 text-gray-900"
+              onClick={handleCancel}
+              className="rounded-md bg-gray-100 px-6 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-md bg-purple-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
+              className="rounded-md bg-purple-500 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
             >
               Save
             </button>

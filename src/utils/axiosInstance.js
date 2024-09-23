@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const axiosInstance = axios.create({
 baseURL: 'https://event-management-backend-xtgy.onrender.com/api/',
+// baseURL: 'http://localhost:4000/api/',
   headers: {
     'Content-Type': 'application/json',
   },

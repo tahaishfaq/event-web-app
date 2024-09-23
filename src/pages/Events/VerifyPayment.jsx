@@ -1,6 +1,4 @@
-// VerifyPayment.js
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance from "../../utils/axiosInstance";
 import { toast, Toaster } from 'sonner';
@@ -8,6 +6,7 @@ import { toast, Toaster } from 'sonner';
 const VerifyPayment = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const [hasVerified, setHasVerified] = useState(false); // State to track if verification has occurred
 
     useEffect(() => {
         const verifyPayment = async () => {
@@ -30,8 +29,12 @@ const VerifyPayment = () => {
             }
         };
 
-        verifyPayment();
-    }, [location, navigate]);
+        // Run only if verification has not already occurred
+        if (!hasVerified) {
+            verifyPayment();
+            setHasVerified(true); // Set flag to true after first verification
+        }
+    }, [location, navigate, hasVerified]);
 
     return (
         <div>

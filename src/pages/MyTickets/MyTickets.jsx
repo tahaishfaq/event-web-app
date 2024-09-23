@@ -23,8 +23,8 @@ const MyTickets = () => {
             <h2 className="text-2xl font-semibold">My Tickets</h2>
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {myTickets?.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} />
+            {myTickets?.map((ticket, index) => (
+              <TicketCard key={ticket?._id} ticket={ticket} />
             ))}
           </div>
         </div>

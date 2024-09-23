@@ -16,8 +16,6 @@ import axiosInstance from "../../utils/axiosInstance";
 export default function Signup() {
   const { register } = useAuth();
   const [dateOfBirth, setDateOfBirth] = useState(null);
-  const [frontPicture, setFrontPicture] = useState(null);
-  const [backPicture, setBackPicture] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
@@ -28,6 +26,7 @@ export default function Signup() {
       phone_number: "",
       email: "",
       password: "",
+      gender: "", // Add gender to the initial form values
     },
     validationSchema: Yup.object({
       fullname: Yup.string().required("Full name is required"),
@@ -38,34 +37,31 @@ export default function Signup() {
       password: Yup.string()
         .min(8, "Password must be at least 8 characters")
         .required("Password is required"),
+      gender: Yup.string().oneOf(["male", "female", "other"], "Please select a valid gender").required("Gender is required"), // Add validation for gender
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
       try {
-        // Check if all images are selected
-        if (!frontPicture || !backPicture || !profilePicture) {
-          toast.error("Please select all required images");
+        // Check if profile picture is selected
+        if (!profilePicture) {
+          toast.error("Please select a profile picture");
           setIsUploading(false);
           return;
         }
-  
-        const frontPictureURL = await uploadImage(frontPicture, "frontPicture");
-        const backPictureURL = await uploadImage(backPicture, "backPicture");
-        const profilePicutureURL = await uploadImage(
+
+        const profilePictureURL = await uploadImage(
           profilePicture,
           "profilePicture"
         );
-  
+
         const registrationData = {
           ...values,
           dateOfBirth: dateOfBirth
             ? dateOfBirth.toISOString().split("T")[0]
             : null,
-          front_picture: frontPictureURL,
-          back_picture: backPictureURL,
-          profile_picture: profilePicutureURL,
+          profile_picture: profilePictureURL,
         };
-  
+
         await axiosInstance
           .post("/users/register", registrationData)
           .then((res) => {
@@ -135,7 +131,7 @@ export default function Signup() {
                         htmlFor="profile_picture"
                         className="block text-sm font-medium leading-6 text-gray-900"
                       >
-                        Front Picture
+                        Profile Picture
                       </label>
                       <div className="mt-2">
                         <input
@@ -200,6 +196,39 @@ export default function Signup() {
                         formik.errors.dateOfBirth ? (
                           <div className="text-red-500 text-sm mt-1">
                             {formik.errors.dateOfBirth}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Gender Field */}
+                    <div>
+                      <label
+                        htmlFor="gender"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Gender
+                      </label>
+                      <div className="mt-2">
+                        <select
+                          id="gender"
+                          name="gender"
+                          required
+                          {...formik.getFieldProps("gender")}
+                          className={`block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6 ${
+                            formik.touched.gender && formik.errors.gender
+                              ? "ring-red-500"
+                              : ""
+                          }`}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                        {formik.touched.gender && formik.errors.gender ? (
+                          <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.gender}
                           </div>
                         ) : null}
                       </div>
@@ -290,44 +319,6 @@ export default function Signup() {
                             {formik.errors.password}
                           </div>
                         ) : null}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="frontPicture"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Front Picture
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="frontPicture"
-                          name="frontPicture"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(e, setFrontPicture)}
-                          className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="backPicture"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Back Picture
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="backPicture"
-                          name="backPicture"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(e, setBackPicture)}
-                          className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500"
-                        />
                       </div>
                     </div>
 

@@ -15,6 +15,7 @@ import VerifyPayment from "./pages/Events/VerifyPayment";
 import MyTickets from "./pages/MyTickets/MyTickets";
 import { useEffect, useState } from "react";
 import UpdateProfile from "./pages/UpdateProfile/UpdateProfile";
+import UserProfile from "./pages/UpdateProfile/UserProfile";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -46,6 +47,7 @@ function App() {
         <Route path="/verify-payment" element={<VerifyPayment />} />
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/show-profile" element={<UpdateProfile />} />
+        <Route path="/user-profile/:id" element={<UserProfile />} />
 
         <Route
           path="/"

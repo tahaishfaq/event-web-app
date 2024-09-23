@@ -11,22 +11,34 @@ const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [eventDetails, setEventDetails] = useState(null);
+  const [guests, setGuests] = useState([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    try {
-      axiosInstance.get(`/events/view/${id}`).then((res) => {
-        console.log("single-event", res?.data);
+    // Fetch event details
+    axiosInstance
+      .get(`/events/view/${id}`)
+      .then((res) => {
         setEventDetails(res?.data);
+      })
+      .catch((error) => {
+        console.log(error);
       });
-    } catch (error) {
-      console.log(error);
-    }
-  }, [id]);
 
-  if (!eventDetails) {
-    return <div>Loading...</div>;
-  }
+    // Fetch guests attending the event
+    axiosInstance
+      .get(`/events/guests/${id}`)
+      .then((res) => {
+        const uniqueGuests = res?.data?.guests.filter(
+          (guest, index, self) =>
+            index === self.findIndex((g) => g._id === guest._id)
+        );
+        setGuests(uniqueGuests);
+      })
+      .catch((error) => {
+        console.log("Error fetching guests: ", error);
+      });
+  }, [id]);
 
   const handleBookTicket = async (eventId) => {
     if (user?._id === eventDetails?.created_by?._id) {
@@ -34,18 +46,20 @@ const EventDetails = () => {
     } else {
       try {
         const res = await axiosInstance.post(`/events/book/${eventId}`);
-        console.log("bookTicket", res?.data);
-
-        // Redirect to the authorization URL in the same tab
         if (res?.data?.authorization_url) {
           window.location.href = res.data.authorization_url;
         }
       } catch (error) {
         console.log(error);
-        toast.error("Error booking ticket");
+        toast.error(error?.response?.data?.message);
       }
     }
   };
+
+  if (!eventDetails) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div>
       <Toaster richColors />
@@ -82,14 +96,17 @@ const EventDetails = () => {
                   By {eventDetails.created_by.fullname}
                 </p>
                 <p className="text-sm text-gray-700 mt-2">
-                  {eventDetails.event_address}
+                  {eventDetails.event_address.address}
                 </p>
               </div>
               <div className="w-full py-4">
                 <video
                   src={eventDetails.event_video}
-                  controls
                   className="w-full h-auto"
+                  controls
+                  autoPlay
+                  muted
+                  loop
                 />
               </div>
             </div>
@@ -116,7 +133,7 @@ const EventDetails = () => {
             <p className="text-gray-700 mb-1">
               Location:{" "}
               <span className="font-semibold">
-                {eventDetails.event_address}
+                {eventDetails.event_address.address}
               </span>
             </p>
             <p className="text-gray-700 mb-1">
@@ -138,7 +155,7 @@ const EventDetails = () => {
             <p className="text-gray-700 mb-1">
               Ticket Price:{" "}
               <span className="font-semibold">
-                ${eventDetails.ticket_price}
+                R{eventDetails.ticket_price}
               </span>
             </p>
           </div>
@@ -181,22 +198,77 @@ const EventDetails = () => {
             </button>
           </div>
         </div>
+
+        {/* Google Map */}
         <div className="flex flex-col items-start w-full py-6">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.108037150107!2d-122.4194154846815!3d37.77492977975866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085814d2f2b6e69%3A0xe7bfbd763b144f70!2sBalai%20Kartini!5e0!3m2!1sen!2sus!4v1619159261515!5m2!1sen!2sus"
-            className="w-full lg:h-52 h-48 object-cover mb-4"
+            className="w-full rounded-lg h-60 sm:h-96"
+            marginHeight="0"
+            marginWidth="0"
+            src={`https://maps.google.com/maps?q=${eventDetails?.event_address?.latitude},${eventDetails?.event_address?.longitude}&hl=en&z=14&output=embed`}
             allowFullScreen=""
             loading="lazy"
             title="Event Location"
           ></iframe>
-
-          <button
-            onClick={() => handleBookTicket(eventDetails._id)}
-            className="bg-purple-500 text-white px-4 py-2 rounded  w-full hover:bg-purple-600 lg:hidden block"
-          >
-            Book Ticket
-          </button>
         </div>
+
+        {/* Guest List Table */}
+        <div className="flex flex-col mt-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Guests Attending
+          </h2>
+          {guests.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white shadow-md rounded-lg">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      Profile Picture
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      Full Name
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      Email
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      Gender
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      Phone #
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {guests.map((guest, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                      <td className="px-4 py-2">
+                        <img
+                          src={guest.profile_picture}
+                          alt={guest.fullname}
+                          className="h-10 w-10 rounded-full"
+                        />
+                      </td>
+                      <td className="px-4 py-2">{guest.fullname}</td>
+                      <td className="px-4 py-2">{guest.email}</td>
+                      <td className="px-4 py-2 capitalize">{guest.gender}</td>
+                      <td className="px-4 py-2">{guest.phone_number}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-700">No guests have joined yet.</p>
+          )}
+        </div>
+
+        <button
+          onClick={() => handleBookTicket(eventDetails._id)}
+          className="bg-purple-500 text-white px-4 py-2 rounded  w-full hover:bg-purple-600 lg:hidden block"
+        >
+          Book Ticket
+        </button>
       </div>
       <Footer />
     </div>

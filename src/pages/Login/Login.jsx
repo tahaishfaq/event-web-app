@@ -32,7 +32,7 @@ export default function Login() {
         console.log(response?.data);
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
-        localStorage.setItem("event_user", JSON.stringify(user));
+        localStorage.setItem("userId", user?._id);
         localStorage.setItem("isLoggedIn", "true");
         setTotalEarnings(user?.total_earnings);
         setUser(user);
