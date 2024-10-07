@@ -37,7 +37,9 @@ export default function Signup() {
       password: Yup.string()
         .min(8, "Password must be at least 8 characters")
         .required("Password is required"),
-      gender: Yup.string().oneOf(["male", "female", "other"], "Please select a valid gender").required("Gender is required"), // Add validation for gender
+      gender: Yup.string()
+        .oneOf(["male", "female", "other"], "Please select a valid gender")
+        .required("Gender is required"), // Add validation for gender
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
@@ -322,7 +324,17 @@ export default function Signup() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-6">
+                    <div className="flex items-center gap-x-1 pt-6">
+                      <span>By signing up you have to accept our</span>
+                      <Link
+                        to="/privacy-policy"
+                        className="font-semibold text-purple-600 hover:text-purple-500 hover:underline"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </div>
+
+                    <div className="flex items-center justify-between ">
                       <div className="flex items-center">
                         <span className="block text-sm leading-6 text-gray-700 ">
                           Already have an account?

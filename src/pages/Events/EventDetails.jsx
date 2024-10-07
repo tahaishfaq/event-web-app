@@ -48,6 +48,8 @@ const EventDetails = () => {
         const res = await axiosInstance.post(`/events/book/${eventId}`);
         if (res?.data?.authorization_url) {
           window.location.href = res.data.authorization_url;
+        }else{
+          toast.success(res?.data?.message)
         }
       } catch (error) {
         console.log(error);

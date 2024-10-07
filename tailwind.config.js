@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        roboto: ['Roboto', 'sans-serif'],
+        dancingScript: ['Dancing Script', 'cursive'], // Add Nunito to the font family options
+      },
+    },
   },
   plugins: [
     require('@tailwindcss/forms'),

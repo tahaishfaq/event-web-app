@@ -33,7 +33,6 @@ export default function Login() {
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
         localStorage.setItem("userId", user?._id);
-        localStorage.setItem("isLoggedIn", "true");
         setTotalEarnings(user?.total_earnings);
         setUser(user);
         toast.success("Login Successful");

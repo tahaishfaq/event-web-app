@@ -6,6 +6,9 @@ import Footer from "../../components/Footer";
 
 import { toast, Toaster } from "sonner"; // To show notifications
 import { useAuth } from "../../context/AuthContext";
+import UserEvents from "./UserEvents";
+import FollowersModel from "../../components/FollowersModel";
+import FollowingModel from "../../components/FollowingModel";
 
 const UserProfile = () => {
   const { id } = useParams(); // id is the user ID of the profile being viewed
@@ -60,6 +63,42 @@ const UserProfile = () => {
     }
   };
 
+  const [userEvents, setUserEvents] = useState([]);
+
+  useEffect(() => {
+    try {
+      axiosInstance.get(`/events/getEventsByUserId/${id}`).then((res) => {
+        console.log("my events", res);
+        setUserEvents(res?.data?.createdEvents);
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [id]);
+
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await axiosInstance.get(`/users/get-followers/${id}`);
+      setFollowers(response.data);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    try {
+      const response = await axiosInstance.get(`/users/get-following/${id}`);
+      setFollowing(response.data);
+    } catch (error) {
+      console.error("Error fetching following:", error);
+    }
+  };
+
   return (
     <>
       <NavBar />
@@ -79,27 +118,61 @@ const UserProfile = () => {
               </p>
 
               <div className="flex items-center gap-x-10 pt-5">
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-semibold">Followers</h1>
-                  <span>{userProfile?.followers.length || 0}</span>
-                </div>
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-semibold">Following</h1>
-                  <span>{userProfile?.following.length || 0}</span>
-                </div>
+                <h1
+                  className="text-xl font-semibold cursor-pointer"
+                  onClick={() => {
+                    fetchFollowers();
+                    setIsFollowersModalOpen(true);
+                  }}
+                >
+                  Followers: {userProfile?.followers?.length || 0}
+                </h1>
+
+                <h1
+                  className="text-xl font-semibold cursor-pointer"
+                  onClick={() => {
+                    fetchFollowing();
+                    setIsFollowingModalOpen(true);
+                  }}
+                >
+                  Following: {userProfile?.following?.length || 0}
+                </h1>
+
+                {/* Followers Modal */}
+                {isFollowersModalOpen && (
+                  <FollowersModel
+                    isOpen={isFollowersModalOpen}
+                    onClose={() => setIsFollowersModalOpen(false)}
+                    followers={followers}
+                  />
+                )}
+
+                {/* Following Modal */}
+                {isFollowingModalOpen && (
+                  <FollowingModel
+                    isOpen={isFollowingModalOpen}
+                    onClose={() => setIsFollowingModalOpen(false)}
+                    following={following}
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-x-4 pt-5">
-                <img
-                  src={
-                    userProfile?.profile_picture ||
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  }
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover"
-                />
+                {userProfile?.profile_picture ? (
+                  <img
+                    src={userProfile?.profile_picture}
+                    alt="profile"
+                    className="w-24 h-24 rounded-full bg-gray-100 object-cover object-center"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold">
+                    {userProfile?.fullname?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col gap-y-2">
-                  <span className="text-xl font-semibold">{userProfile?.fullname}</span>
+                  <span className="text-xl font-semibold">
+                    {userProfile?.fullname}
+                  </span>
                   <div>
                     {currentUser?._id !== id && (
                       <button
@@ -145,6 +218,10 @@ const UserProfile = () => {
                   </dd>
                 </div>
               </dl>
+            </div>
+
+            <div>
+              <UserEvents events={userEvents} />
             </div>
           </div>
         </main>

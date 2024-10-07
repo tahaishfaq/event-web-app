@@ -12,6 +12,9 @@ import { storage } from "../../utils/firebaseConfig";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { toast, Toaster } from "sonner";
 import { ClipLoader } from "react-spinners";
+import FollowersModel from "../../components/FollowersModel";
+import FollowingModel from "../../components/FollowingModel";
+import WithdrawalHistory from "../../components/WithdrawalHistory";
 
 export default function UpdateProfile() {
   const {
@@ -94,6 +97,33 @@ export default function UpdateProfile() {
     });
   };
 
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/users/get-followers/${user._id}`
+      );
+      setFollowers(response.data);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/users/get-following/${user._id}`
+      );
+      setFollowing(response.data);
+    } catch (error) {
+      console.error("Error fetching following:", error);
+    }
+  };
+
   //   const handleRequestWithdrawal = async () => {
   //     try {
   //       await requestWithdrawal();
@@ -122,27 +152,58 @@ export default function UpdateProfile() {
               </p>
 
               <div className="flex items-center gap-x-10 pt-5">
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-semibold">Followers</h1>
-                  <span>{user?.followers?.length || 0}</span>{" "}
-                  {/* Dynamically show followers */}
-                </div>
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-semibold">Following</h1>
-                  <span>{user?.following?.length || 0}</span>{" "}
-                  {/* Dynamically show following */}
-                </div>
+                <h1
+                  className="text-xl font-semibold cursor-pointer"
+                  onClick={() => {
+                    fetchFollowers();
+                    setIsFollowersModalOpen(true);
+                  }}
+                >
+                  Followers: {user?.followers?.length || 0}
+                </h1>
+
+                <h1
+                  className="text-xl font-semibold cursor-pointer"
+                  onClick={() => {
+                    fetchFollowing();
+                    setIsFollowingModalOpen(true);
+                  }}
+                >
+                  Following: {user?.following?.length || 0}
+                </h1>
+
+                {/* Followers Modal */}
+                {isFollowersModalOpen && (
+                  <FollowersModel
+                    isOpen={isFollowersModalOpen}
+                    onClose={() => setIsFollowersModalOpen(false)}
+                    followers={followers}
+                  />
+                )}
+
+                {/* Following Modal */}
+                {isFollowingModalOpen && (
+                  <FollowingModel
+                    isOpen={isFollowingModalOpen}
+                    onClose={() => setIsFollowingModalOpen(false)}
+                    following={following}
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-x-4 pt-5">
-                <img
-                  src={
-                    user?.profile_picture ||
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  } // Show default image if none
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover"
-                />
+                {user?.profile_picture ? (
+                  <img
+                    src={user?.profile_picture}
+                    alt="profile"
+                    className="w-24 h-24 rounded-full bg-gray-100 object-cover object-center"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold">
+                    {user?.fullname?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
+
                 <button
                   className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md"
                   onClick={() => setProfileModel(true)}
@@ -158,13 +219,6 @@ export default function UpdateProfile() {
                   </dt>
                   <dd className="mt-1 flex justify-between gap-x-6 sm:mt-0 sm:flex-auto">
                     <div className="text-gray-900">{user?.fullname}</div>
-                    {/* <button
-                                            type="button"
-                                            className="font-semibold text-purple-600 hover:text-purple-500"
-                                            onClick={openModal}
-                                        >
-                                            Update
-                                        </button> */}
                   </dd>
                 </div>
                 <div className="pt-6 sm:flex">
@@ -173,13 +227,6 @@ export default function UpdateProfile() {
                   </dt>
                   <dd className="mt-1 flex justify-between gap-x-6 sm:mt-0 sm:flex-auto">
                     <div className="text-gray-900">{user?.email}</div>
-                    {/* <button
-                                            type="button"
-                                            className="font-semibold text-purple-600 hover:text-purple-500"
-                                            onClick={openModal}
-                                        >
-                                            Update
-                                        </button> */}
                   </dd>
                 </div>
                 <div className="pt-6 sm:flex">
@@ -219,7 +266,7 @@ export default function UpdateProfile() {
                 {totalEarnings}
               </div>
 
-              {totalEarnings > 50 && (
+              {totalEarnings > 10 && (
                 <div className="mt-6">
                   <button
                     type="button"
@@ -230,6 +277,10 @@ export default function UpdateProfile() {
                   </button>
                 </div>
               )}
+
+              <div>
+                <WithdrawalHistory />
+              </div>
             </div>
           </div>
         </main>

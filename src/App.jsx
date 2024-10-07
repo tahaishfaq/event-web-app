@@ -16,30 +16,35 @@ import MyTickets from "./pages/MyTickets/MyTickets";
 import { useEffect, useState } from "react";
 import UpdateProfile from "./pages/UpdateProfile/UpdateProfile";
 import UserProfile from "./pages/UpdateProfile/UserProfile";
+import { useAuth } from "./context/AuthContext";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage/PrivacyPolicyPage";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const { setUser, user } = useAuth();
   useEffect(() => {
-    if(localStorage.getItem("isLoggedIn") === "true"){
-    setIsLoggedIn(true);
-    }
-    else{
-      setIsLoggedIn(false);
+    const fetchUser = () => {
+      try {
+        axiosInstance
+          .get(`/users/profile/${localStorage.userId}`)
+          .then((res) => {
+            console.log("user-profile", res?.data);
+            setUser(res.data);
+          });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (localStorage.token && localStorage.userId) {
+      fetchUser();
     }
   }, [localStorage]);
 
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={ <Login />}
-        />
-        <Route
-          path="/register"
-          element={<Signup />}
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Signup />} />
         {/* <Route path="/homepage" element={<HomePage />} /> */}
         <Route path="/events" element={<Events />} />
         <Route path="/add-event" element={<AddNewEvent />} />
@@ -48,11 +53,9 @@ function App() {
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/show-profile" element={<UpdateProfile />} />
         <Route path="/user-profile/:id" element={<UserProfile />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
-        <Route
-          path="/"
-          element={isLoggedIn ? <Events /> : <Login />}
-        />
+        <Route path="/" element={user ? <Events /> : <Login />} />
       </Routes>
     </Router>
   );
